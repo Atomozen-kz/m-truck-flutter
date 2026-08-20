@@ -145,8 +145,25 @@ lib/
 совпадает с фоном плитки, шва не видно.
 
 `BrandHeader` — шапка входа: плитка слева, название и роль справа. Логотип стоит
-на сплэше и на экране входа. Иконка запуска приложения пока стандартная —
-исходник для неё подходит, генерацию можно включить отдельно.
+на сплэше и на экране входа.
+
+Иконка запуска собирается `flutter_launcher_icons` из `tool/launcher_icon/`
+(конфиг в конце `pubspec.yaml`) — папка лежит вне `assets/`, чтобы исходники
+иконки не попадали в APK. Там два кадра, вырезанные из `logo.png` без пустых
+полей: `icon.png` — марка на подложке `#151920` для обычной иконки, и
+`icon_foreground.png` — прозрачный слой для adaptive-иконки Android, где марка
+мельче, потому что система обрезает внешнюю треть. Пересобрать после правки
+логотипа:
+
+```bash
+dart run flutter_launcher_icons
+```
+
+Пакет при этом портит `ios/Runner.xcodeproj/project.pbxproj`: подменяет
+`ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES` на
+`AppIcon`. Имя каталога иконок и без того задано верной настройкой
+`ASSETCATALOG_COMPILER_APPICON_NAME`, поэтому правку файла надо откатывать:
+`git checkout -- ios/Runner.xcodeproj/project.pbxproj`.
 
 ### Формат ответов
 
