@@ -14,8 +14,8 @@ import 'primitives.dart';
 /// Карта маршрута на тайлах OpenStreetMap.
 ///
 /// Камера подгоняется по ломаной так, чтобы точки А и Б были видны целиком.
-/// Встроенная в экран карта не перехватывает жесты — по тапу она открывается
-/// на весь экран, где её уже можно двигать и приближать.
+/// Встроенная в экран карта не перехватывает жесты — по тапу в любую её точку
+/// она открывается на весь экран, где её уже можно двигать и приближать.
 class RouteMapView extends StatefulWidget {
   const RouteMapView({
     super.key,
@@ -139,6 +139,11 @@ class _RouteMapViewState extends State<RouteMapView> {
                     maxZoom: mapMaxZoom,
                     minZoom: 3,
                     onMapReady: () => _ready = true,
+                    // Жестовый детектор самой карты забирает тап себе, и
+                    // внешняя обёртка его не увидит, — слушаем тап здесь.
+                    onTap: (_, _) {
+                      if (widget.expandable) _openFullscreen();
+                    },
                     interactionOptions: InteractionOptions(
                       flags: widget.interactive ? mapGestures : InteractiveFlag.none,
                     ),

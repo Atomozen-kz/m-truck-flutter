@@ -146,8 +146,9 @@ class _FeedScreenState extends State<FeedScreen> {
 
 /// Превью карты над лентой: где лежат грузы, одним взглядом.
 ///
-/// Превью намеренно без жестов — иначе оно съедало бы прокрутку ленты. Тап и
-/// кнопка разворота ведут на полноэкранную карту, где жесты работают.
+/// Превью намеренно без жестов — иначе оно съедало бы прокрутку ленты. Тап в
+/// любую точку карты и кнопка разворота ведут на полноэкранную карту, где
+/// жесты работают; тап по метке открывает её сразу с этой заявкой.
 class _MapPreview extends StatelessWidget {
   const _MapPreview({required this.orders});
 
@@ -174,6 +175,8 @@ class _MapPreview extends StatelessWidget {
                 OrdersMapView(
                   orders: orders,
                   height: 150,
+                  onTapMap: () => _open(context),
+                  onSelect: (order) => _open(context, initialId: order.id),
                   onLocate: context.read<LocationService>().currentLatLng,
                 ),
                 Positioned(

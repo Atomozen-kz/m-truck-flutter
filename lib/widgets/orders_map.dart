@@ -21,6 +21,7 @@ class OrdersMapView extends StatefulWidget {
     this.interactive = false,
     this.selectedId,
     this.onSelect,
+    this.onTapMap,
     this.onLocate,
   });
 
@@ -32,6 +33,11 @@ class OrdersMapView extends StatefulWidget {
   final int? selectedId;
 
   final ValueChanged<Order>? onSelect;
+
+  /// Тап по полотну карты. Внутри превью карта не двигается, и жест по любой
+  /// её точке должен вести туда же, куда кнопка разворота, — на весь экран.
+  final VoidCallback? onTapMap;
+
   final MapLocator? onLocate;
 
   @override
@@ -101,6 +107,9 @@ class _OrdersMapViewState extends State<OrdersMapView> {
                   maxZoom: mapMaxZoom,
                   minZoom: 3,
                   onMapReady: () => _ready = true,
+                  // Тап забирает себе жестовый детектор самой карты, поэтому
+                  // обёртка снаружи его не увидит — слушаем здесь.
+                  onTap: (_, _) => widget.onTapMap?.call(),
                   interactionOptions: InteractionOptions(
                     flags: widget.interactive ? mapGestures : InteractiveFlag.none,
                   ),
