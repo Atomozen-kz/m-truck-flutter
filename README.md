@@ -10,6 +10,13 @@
 - **Дизайн:** канвас Brilliant `Driver` (16 экранов + страница токенов)
 - **Платформы:** Android, iOS · Flutter 3.41 / Dart 3.11
 
+## Скриншоты
+
+| Вход по телефону | Лента заявок | Активный рейс | Мои рейсы |
+|---|---|---|---|
+| ![Вход по телефону](docs/screenshots/01-phone.png) | ![Лента заявок](docs/screenshots/02-feed.png) | ![Активный рейс](docs/screenshots/03-active-trip.png) | ![Мои рейсы](docs/screenshots/04-bids.png) |
+| Свой цифровой пэд, маска `+7 707 123 45 67` | Биржа: цена крупно, маршрут, фильтры-чипы | Карта, «сколько осталось», свайп смены статуса | Отклики со статусами и назначенный рейс |
+
 ## Запуск
 
 ```bash
@@ -26,6 +33,12 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
 Вход — по телефону, SMS не отправляются: **код подтверждения всегда `5555`**.
 Новый водитель после входа заполняет анкету (права + машина) и ждёт одобрения
 модератором; до этого биржа доступна только для просмотра.
+
+Тестовый аккаунт (одобренный водитель, боевой API):
+
+| Телефон | Код |
+|---|---|
+| `77010030212` | `5555` |
 
 ## Проверка
 
@@ -51,6 +64,38 @@ flutter test test/golden_test.dart --update-goldens
 
 Если перенести кэш на диск проекта (`PUB_CACHE=D:\pub-cache` + `flutter pub get`),
 строку `kotlin.incremental=false` можно убрать и вернуть инкрементальность.
+
+### Релизная подпись
+
+Релиз подписывается своим ключом, а не отладочным: приложение с debug-подписью
+нельзя ни обновить поверх, ни загрузить в Play.
+
+Ключ и пароли лежат вне репозитория — `android/key.properties` (в `.gitignore`)
+указывает на keystore: `storeFile`, `storePassword`, `keyAlias`, `keyPassword`.
+Без этого файла сборка молча падает обратно на debug-ключ, чтобы
+`flutter run --release` работал у любого, кто клонировал проект.
+
+Создать ключ заново (пароль хранить в менеджере паролей — потеря ключа означает
+невозможность выпустить обновление):
+
+```bash
+keytool -genkeypair -v -keystore <путь>/upload.jks -storetype PKCS12   -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+```bash
+flutter build apk --release              # один APK на все ABI, ~55 МБ
+flutter build apk --release --split-per-abi   # по APK на архитектуру, ~20 МБ
+flutter build appbundle --release        # .aab для Google Play
+```
+
+Проверить, каким ключом подписан результат:
+
+```bash
+apksigner verify --print-certs -v build/app/outputs/flutter-apk/app-release.apk
+```
+
+Перед публикацией в Play остаётся сменить `applicationId` с `com.example.m_truck`
+на реальный и поднять `version` в `pubspec.yaml`.
 
 ## Экраны
 
