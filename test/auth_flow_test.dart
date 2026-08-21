@@ -145,6 +145,67 @@ void main() {
     expect(session.canBid, isTrue);
   });
 
+  testWidgets(
+      'верный код закрывает экран кода и открывает следующий по стадии',
+      (tester) async {
+    // CodeScreen — маршрут, вытолкнутый Navigator.push поверх корневого
+    // переключателя стадий (как в app.dart::_RootGate). Если после verifyCode
+    // никто не вызовет pop, экран так и останется висеть с заполненным кодом.
+    tester.view
+      ..physicalSize = _phone
+      ..devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
+    final api = ApiClient(
+      tokens: TokenStore(prefs),
+      httpClient: MockClient((request) async {
+        if (request.url.path.endsWith('/verify')) {
+          return _ok({
+            'token': '1|test-token',
+            'is_new': false,
+            'user': Fixtures.userJson(),
+          });
+        }
+        return _ok({'exists': true, 'code_sent': true});
+      }),
+    );
+    final session = SessionController(
+      auth: AuthRepository(api: api, tokens: TokenStore(prefs), cache: CacheStore(prefs)),
+      tokens: TokenStore(prefs),
+      connectivity: ConnectivityService(),
+    );
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: session,
+        child: MaterialApp(
+          locale: const Locale('ru'),
+          home: Builder(
+            builder: (context) {
+              final stage = context.select<SessionController, SessionStage>((s) => s.stage);
+              return stage == SessionStage.ready
+                  ? const Scaffold(body: Center(child: Text('HOME')))
+                  : const PhoneScreen();
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tapDigits(tester, '7071234567');
+    await tester.tap(find.text('ПОЛУЧИТЬ КОД'));
+    await settle(tester);
+    await tapDigits(tester, '5555');
+    await settle(tester);
+
+    expect(session.stage, SessionStage.ready);
+    expect(find.text('Введите код из SMS'), findsNothing);
+    expect(find.text('HOME'), findsOneWidget);
+  });
+
   testWidgets('водитель на модерации не попадает на биржу', (tester) async {
     final (session, _) = await pumpAuth(tester, respond: (request) {
       if (request.url.path.endsWith('/verify')) {

@@ -75,7 +75,11 @@ class _CodeScreenState extends State<CodeScreen> {
     setState(() => _isVerifying = true);
     try {
       await context.read<SessionController>().verifyCode(_code);
-      // Корневой навигатор сам переключит экран по новой стадии сессии.
+      if (!mounted) return;
+      // CodeScreen — отдельный маршрут поверх _RootGate: сама смена стадии
+      // сессии его не закроет, иначе экран так и останется висеть с кодом.
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      return;
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
